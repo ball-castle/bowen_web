@@ -49,6 +49,20 @@ const useAlbumStore = create(
         }))
       },
 
+      reorderPhotos: (activeId, overId) => {
+        set((state) => {
+          const oldIndex = state.photos.findIndex(p => p.id === activeId)
+          const newIndex = state.photos.findIndex(p => p.id === overId)
+          if (oldIndex !== -1 && newIndex !== -1) {
+            const newPhotos = [...state.photos]
+            const [movedItem] = newPhotos.splice(oldIndex, 1)
+            newPhotos.splice(newIndex, 0, movedItem)
+            return { photos: newPhotos }
+          }
+          return state
+        })
+      },
+
       addPhotos: (files, albumId) => {
         return Promise.all(
           files.map(
