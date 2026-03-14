@@ -1,11 +1,11 @@
 {
   "$schema": "https://ui.shadcn.com/schema.json",
   "style": "base-nova",
-  "rsc": true,
+  "rsc": false,
   "tsx": false,
   "tailwind": {
     "config": "",
-    "css": "legacy-vite/src/index.css",
+    "css": "src/index.css",
     "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""
