@@ -70,7 +70,14 @@ npm run preview
 Build and deploy to Cloudflare Workers:
 
 ```bash
+npm run cf:secrets
 npm run deploy
+```
+
+Preview the Cloudflare secret sync without uploading anything:
+
+```bash
+npm run cf:secrets:dry-run
 ```
 
 Required Cloudflare runtime secrets:
@@ -81,3 +88,13 @@ Required Cloudflare runtime secrets:
 - `SESSION_SECRET`
 
 The Wrangler config already enables `nodejs_compat` and targets the OpenNext worker output in `.open-next/worker.js`.
+
+## Production checklist
+
+1. Replace `.env` `DATABASE_URL` with a real Neon connection string.
+2. Run `npm run db:migrate:deploy`.
+3. Optionally run `npm run db:seed`.
+4. Log in to Cloudflare with `wrangler login`.
+5. Run `npm run cf:secrets`.
+6. Run `npm run deploy`.
+7. In Cloudflare, attach your custom domain to the `bowen-web` worker.
