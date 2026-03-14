@@ -1,27 +1,34 @@
 "use client";
-import React, { useState } from 'react'
-import * as Dialog from '@radix-ui/react-dialog'
-import { X, KeyRound } from 'lucide-react'
-import useAuthStore from '@/store/authStore'
+import React, { useState, useTransition } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { KeyRound, Loader2, X } from "lucide-react";
 
-export default function LoginModal({ isOpen, onOpenChange }) {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const { login } = useAuthStore()
+import { loginAdmin } from "@/app/actions";
+
+export default function LoginModal({ isOpen, onOpenChange, onSuccess }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isPending, startTransition] = useTransition();
 
   const handleLogin = (e) => {
-    e.preventDefault()
-    setError('')
-    const success = login(username, password)
-    if (success) {
-      onOpenChange(false)
-      setUsername('')
-      setPassword('')
-    } else {
-      setError('用户名或密码错误')
-    }
-  }
+    e.preventDefault();
+    setError("");
+
+    startTransition(async () => {
+      const result = await loginAdmin(username.trim(), password);
+
+      if (result.ok) {
+        setUsername("");
+        setPassword("");
+        onSuccess?.();
+        onOpenChange(false);
+        return;
+      }
+
+      setError(result.error ?? "登录失败");
+    });
+  };
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
@@ -48,6 +55,7 @@ export default function LoginModal({ isOpen, onOpenChange }) {
                 autoFocus
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                disabled={isPending}
                 className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm ring-offset-[hsl(var(--background))] file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[hsl(var(--muted-foreground))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
                 placeholder="请输入用户名"
               />
@@ -60,6 +68,7 @@ export default function LoginModal({ isOpen, onOpenChange }) {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isPending}
                 className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm ring-offset-[hsl(var(--background))] file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[hsl(var(--muted-foreground))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
                 placeholder="请输入密码"
               />
@@ -69,9 +78,10 @@ export default function LoginModal({ isOpen, onOpenChange }) {
 
             <button
               type="submit"
+              disabled={isPending}
               className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] disabled:pointer-events-none disabled:opacity-50 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary))/0.9] h-10 px-4 py-2 w-full mt-2"
             >
-              登录
+              {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "登录"}
             </button>
           </form>
 
@@ -86,5 +96,5 @@ export default function LoginModal({ isOpen, onOpenChange }) {
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
-  )
+  );
 }

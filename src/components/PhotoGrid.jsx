@@ -1,37 +1,29 @@
 "use client";
-import React, { useState } from 'react'
+import React, { useState } from "react";
 import {
   DndContext,
   closestCenter,
   KeyboardSensor,
+  DragOverlay,
   PointerSensor,
   useSensor,
   useSensors,
-  DragOverlay,
-} from '@dnd-kit/core'
+} from "@dnd-kit/core";
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
   rectSortingStrategy,
-} from '@dnd-kit/sortable'
-import useAlbumStore from '@/store/albumStore'
-import useAuthStore from '@/store/authStore'
-import Lightbox from './Lightbox'
-import { SortablePhoto } from './SortablePhoto'
-import { cn } from '@/lib/utils'
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
 
-function formatSize(bytes) {
-  if (bytes < 1024) return bytes + ' B'
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
-}
+import Lightbox from "./Lightbox";
+import { SortablePhoto } from "./SortablePhoto";
+import useAlbumStore from "@/store/albumStore";
 
-export default function PhotoGrid() {
-  const { activeAlbumId, getAlbumPhotos, deletePhoto, layout, reorderPhotos } = useAlbumStore()
-  const photos = getAlbumPhotos(activeAlbumId)
-  const [lightboxIndex, setLightboxIndex] = useState(null)
-  const [activeId, setActiveId] = useState(null)
-  const { isLoggedIn } = useAuthStore()
+export default function PhotoGrid({ isLoggedIn }) {
+  const { activeAlbumId, getAlbumPhotos, deletePhoto, layout, reorderPhotos } = useAlbumStore();
+  const photos = getAlbumPhotos(activeAlbumId);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [activeId, setActiveId] = useState(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -42,7 +34,7 @@ export default function PhotoGrid() {
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
-  )
+  );
 
   if (photos.length === 0) {
     return (
@@ -57,16 +49,16 @@ export default function PhotoGrid() {
   }
 
   const handleDragEnd = (event) => {
-    setActiveId(null)
-    const { active, over } = event
+    setActiveId(null);
+    const { active, over } = event;
     if (active.id !== over?.id) {
-      reorderPhotos(active.id, over.id)
+      reorderPhotos(active.id, over.id);
     }
-  }
+  };
 
   const handleDragStart = (event) => {
-    setActiveId(event.active.id)
-  }
+    setActiveId(event.active.id);
+  };
 
   return (
     <>
@@ -83,7 +75,7 @@ export default function PhotoGrid() {
           : "columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-3 space-y-3"
         }>
           <SortableContext 
-            items={photos.map(p => p.id)}
+            items={photos.map((photo) => photo.id)}
             strategy={rectSortingStrategy}
           >
             {photos.map((photo, idx) => (
@@ -103,13 +95,13 @@ export default function PhotoGrid() {
         <DragOverlay>
           {activeId ? (
             <SortablePhoto
-              photo={photos.find(p => p.id === activeId)}
-              idx={photos.findIndex(p => p.id === activeId)}
+              photo={photos.find((photo) => photo.id === activeId)}
+              idx={photos.findIndex((photo) => photo.id === activeId)}
               layout={layout}
               isLoggedIn={isLoggedIn}
               deletePhoto={deletePhoto}
               setLightboxIndex={setLightboxIndex}
-              isOverlay={true}
+              isOverlay
             />
           ) : null}
         </DragOverlay>
@@ -119,9 +111,10 @@ export default function PhotoGrid() {
         <Lightbox
           photos={photos}
           initialIndex={lightboxIndex}
+          isLoggedIn={isLoggedIn}
           onClose={() => setLightboxIndex(null)}
         />
       )}
     </>
-  )
+  );
 }

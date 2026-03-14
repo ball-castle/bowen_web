@@ -1,8 +1,9 @@
 "use client";
-import React, { useState, useRef } from 'react'
-import { Upload, FolderPlus, ImagePlus } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import useAlbumStore from '@/store/albumStore'
+import React, { useRef, useState } from "react";
+import { Upload } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import useAlbumStore from "@/store/albumStore";
 
 export default function UploadZone({ className }) {
   const [isDragging, setIsDragging] = useState(false)

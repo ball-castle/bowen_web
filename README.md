@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Bowen Web
 
-## Getting Started
+Next.js 15 photo gallery deployed with OpenNext on Cloudflare Workers, backed by Prisma 7 and Neon Postgres.
 
-First, run the development server:
+## Local setup
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create `.env` from `.env.example` and fill in:
+
+```bash
+DATABASE_URL=...
+DIRECT_URL=...
+ADMIN_USERNAME=...
+ADMIN_PASSWORD=...
+SESSION_SECRET=...
+```
+
+`DIRECT_URL` is optional but recommended for Prisma CLI and migrations. Runtime reads `DATABASE_URL`.
+
+## Development
+
+Run the Next.js dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Useful checks:
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+```bash
+npm run lint
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Database
 
-## Learn More
+Generate the Prisma client:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run db:generate
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Apply committed migrations to the target database:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run db:migrate:deploy
+```
 
-## Deploy on Vercel
+Seed the database from the legacy Vite dataset:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run db:seed
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Cloudflare Workers
+
+Local Workers preview expects a `.dev.vars` file. Start from `.dev.vars.example` and fill in the same runtime secrets used above.
+
+Build and preview the Workers bundle locally:
+
+```bash
+npm run preview
+```
+
+Build and deploy to Cloudflare Workers:
+
+```bash
+npm run deploy
+```
+
+Required Cloudflare runtime secrets:
+
+- `DATABASE_URL`
+- `ADMIN_USERNAME`
+- `ADMIN_PASSWORD`
+- `SESSION_SECRET`
+
+The Wrangler config already enables `nodejs_compat` and targets the OpenNext worker output in `.open-next/worker.js`.

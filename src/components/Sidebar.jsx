@@ -1,134 +1,154 @@
 "use client";
-import React, { useState } from 'react'
-import { Images, FolderOpen, Plus, Trash2, Camera } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import useAlbumStore from '@/store/albumStore'
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 
-export default function Sidebar({ className }) {
-  const { albums, activeAlbumId, setActiveAlbum, addAlbum, deleteAlbum, photos } = useAlbumStore()
-  const [newAlbumName, setNewAlbumName] = useState('')
-  const [dialogOpen, setDialogOpen] = useState(false)
+import React, { useState } from "react";
+import { Camera, FolderOpen, Images, Plus, Trash2 } from "lucide-react";
 
-  const handleCreate = () => {
-    const name = newAlbumName.trim()
-    if (!name) return
-    const id = addAlbum(name)
-    setActiveAlbum(id)
-    setNewAlbumName('')
-    setDialogOpen(false)
-  }
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SYSTEM_ALBUM_ID } from "@/lib/album-constants";
+import { cn } from "@/lib/utils";
+import useAlbumStore from "@/store/albumStore";
+
+export default function Sidebar({ className, isLoggedIn }) {
+  const { albums, activeAlbumId, setActiveAlbum, addAlbum, deleteAlbum, photos } = useAlbumStore();
+  const [newAlbumName, setNewAlbumName] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleCreate = async () => {
+    const name = newAlbumName.trim();
+
+    if (!name) {
+      return;
+    }
+
+    const id = await addAlbum(name);
+    setActiveAlbum(id);
+    setNewAlbumName("");
+    setDialogOpen(false);
+  };
 
   const getPhotoCount = (albumId) => {
-    if (albumId === 'all') return photos.length
-    return photos.filter((p) => p.albumId === albumId).length
-  }
+    if (albumId === "all") return photos.length;
+    return photos.filter((photo) => photo.albumId === albumId).length;
+  };
 
   return (
     <>
-      <aside className={cn('flex flex-col bg-[hsl(var(--card))] border-r border-[hsl(var(--border))] h-full', className)}>
-        {/* Logo */}
-        <div className="px-5 py-5 border-b border-[hsl(var(--border))]">
+      <aside className={cn("flex h-full flex-col border-r border-[hsl(var(--border))] bg-[hsl(var(--card))]", className)}>
+        <div className="border-b border-[hsl(var(--border))] px-5 py-5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 via-purple-500 to-blue-500 flex items-center justify-center shadow-lg">
-              <Camera className="w-5 h-5 text-white" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 via-purple-500 to-blue-500 shadow-lg">
+              <Camera className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-[hsl(var(--foreground))] text-base leading-tight gradient-text">我的相册</h1>
-              <p className="text-[hsl(var(--muted-foreground))] text-xs">Personal Album</p>
+              <h1 className="gradient-text text-base font-bold leading-tight text-[hsl(var(--foreground))]">我的相册</h1>
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">Personal Album</p>
             </div>
           </div>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
-          <p className="px-2 py-1 text-[hsl(var(--muted-foreground))] text-xs font-semibold uppercase tracking-wider mb-2">相册系统</p>
-          
-          {/* Default "All Photos" item */}
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-3">
+          <p className="mb-2 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+            相册系统
+          </p>
+
           <div
             className={cn(
-              'group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150',
-              activeAlbumId === 'all'
-                ? 'bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))]'
-                : 'text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]'
+              "group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-150",
+              activeAlbumId === "all"
+                ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))]"
+                : "text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]"
             )}
-            onClick={() => setActiveAlbum('all')}
+            onClick={() => setActiveAlbum("all")}
           >
-            <div className={cn(
-              'w-7 h-7 rounded-md flex-shrink-0 flex items-center justify-center',
-              activeAlbumId === 'all' ? 'bg-[hsl(var(--primary)/0.2)]' : 'bg-[hsl(var(--secondary))]'
-            )}>
-              <Images className="w-3.5 h-3.5" />
+            <div
+              className={cn(
+                "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md",
+                activeAlbumId === "all" ? "bg-[hsl(var(--primary)/0.2)]" : "bg-[hsl(var(--secondary))]"
+              )}
+            >
+              <Images className="h-3.5 w-3.5" />
             </div>
-            <span className="flex-1 text-sm font-medium truncate">全部相册</span>
-            <span className={cn(
-              'text-xs font-medium px-1.5 py-0.5 rounded-md',
-              activeAlbumId === 'all'
-                ? 'bg-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))]'
-                : 'text-[hsl(var(--muted-foreground))] bg-[hsl(var(--secondary))]'
-            )}>
-              {getPhotoCount('all')}
+            <span className="flex-1 truncate text-sm font-medium">全部相册</span>
+            <span
+              className={cn(
+                "rounded-md px-1.5 py-0.5 text-xs font-medium",
+                activeAlbumId === "all"
+                  ? "bg-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))]"
+                  : "bg-[hsl(var(--secondary))] text-[hsl(var(--muted-foreground))]"
+              )}
+            >
+              {getPhotoCount("all")}
             </span>
           </div>
 
-          <div className="h-4"></div>
-          <p className="px-2 py-1 text-[hsl(var(--muted-foreground))] text-xs font-semibold uppercase tracking-wider mb-2">我的相册</p>
+          <div className="h-4" />
+          <p className="mb-2 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+            我的相册
+          </p>
 
           {albums.map((album) => (
             <div
               key={album.id}
               className={cn(
-                'group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150',
+                "group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-150",
                 activeAlbumId === album.id
-                  ? 'bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))]'
-                  : 'text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]'
+                  ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))]"
+                  : "text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]"
               )}
               onClick={() => setActiveAlbum(album.id)}
             >
               {album.cover ? (
-                <img src={album.cover} alt={album.title} className="w-7 h-7 rounded-md object-cover flex-shrink-0" />
+                <img src={album.cover} alt={album.title} className="h-7 w-7 flex-shrink-0 rounded-md object-cover" />
               ) : (
-                <div className={cn(
-                  'w-7 h-7 rounded-md flex-shrink-0 flex items-center justify-center',
-                  activeAlbumId === album.id ? 'bg-[hsl(var(--primary)/0.2)]' : 'bg-[hsl(var(--secondary))]'
-                )}>
-                  <FolderOpen className="w-3.5 h-3.5" />
+                <div
+                  className={cn(
+                    "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md",
+                    activeAlbumId === album.id ? "bg-[hsl(var(--primary)/0.2)]" : "bg-[hsl(var(--secondary))]"
+                  )}
+                >
+                  <FolderOpen className="h-3.5 w-3.5" />
                 </div>
               )}
-              <span className="flex-1 text-sm font-medium truncate">{album.title}</span>
-              <span className={cn(
-                'text-xs font-medium px-1.5 py-0.5 rounded-md',
-                activeAlbumId === album.id
-                  ? 'bg-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))]'
-                  : 'text-[hsl(var(--muted-foreground))] bg-[hsl(var(--secondary))]'
-              )}>
+              <span className="flex-1 truncate text-sm font-medium">{album.title}</span>
+              <span
+                className={cn(
+                  "rounded-md px-1.5 py-0.5 text-xs font-medium",
+                  activeAlbumId === album.id
+                    ? "bg-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))]"
+                    : "bg-[hsl(var(--secondary))] text-[hsl(var(--muted-foreground))]"
+                )}
+              >
                 {getPhotoCount(album.id)}
               </span>
-              <button
-                onClick={(e) => { e.stopPropagation(); deleteAlbum(album.id) }}
-                className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded text-[hsl(var(--muted-foreground))] hover:text-red-400 hover:bg-red-500/10 transition-all"
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
+              {isLoggedIn && album.id !== SYSTEM_ALBUM_ID && (
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    deleteAlbum(album.id);
+                  }}
+                  className="flex h-6 w-6 items-center justify-center rounded text-[hsl(var(--muted-foreground))] opacity-0 transition-all hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              )}
             </div>
           ))}
         </nav>
 
-        {/* Create album button */}
-        <div className="px-3 py-3 border-t border-[hsl(var(--border))]">
-          <button
-            onClick={() => setDialogOpen(true)}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))] transition-all group"
-          >
-            <div className="w-7 h-7 rounded-md bg-[hsl(var(--secondary))] group-hover:bg-[hsl(var(--primary)/0.15)] group-hover:text-[hsl(var(--primary))] flex items-center justify-center transition-all">
-              <Plus className="w-3.5 h-3.5" />
-            </div>
-            新建相册
-          </button>
-        </div>
+        {isLoggedIn && (
+          <div className="border-t border-[hsl(var(--border))] px-3 py-3">
+            <button
+              onClick={() => setDialogOpen(true)}
+              className="group flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[hsl(var(--muted-foreground))] transition-all hover:bg-[hsl(var(--secondary))] hover:text-[hsl(var(--foreground))]"
+            >
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[hsl(var(--secondary))] transition-all group-hover:bg-[hsl(var(--primary)/0.15)] group-hover:text-[hsl(var(--primary))]">
+                <Plus className="h-3.5 w-3.5" />
+              </div>
+              新建相册
+            </button>
+          </div>
+        )}
       </aside>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -139,18 +159,22 @@ export default function Sidebar({ className }) {
           <input
             type="text"
             value={newAlbumName}
-            onChange={(e) => setNewAlbumName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+            onChange={(event) => setNewAlbumName(event.target.value)}
+            onKeyDown={(event) => event.key === "Enter" && handleCreate()}
             placeholder="输入相册名称..."
-            className="w-full px-3 py-2.5 rounded-lg bg-[hsl(var(--input))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--input))] px-3 py-2.5 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
             autoFocus
           />
-          <DialogFooter className="flex gap-2 flex-row justify-end">
-            <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)}>取消</Button>
-            <Button size="sm" onClick={handleCreate} disabled={!newAlbumName.trim()}>创建</Button>
+          <DialogFooter className="flex flex-row justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)}>
+              取消
+            </Button>
+            <Button size="sm" onClick={handleCreate} disabled={!newAlbumName.trim()}>
+              创建
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

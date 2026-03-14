@@ -2,6 +2,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { getAlbums, getPhotos, createAlbum as dbCreateAlbum, deleteAlbum as dbDeleteAlbum, addPhoto as dbAddPhoto, deletePhoto as dbDeletePhoto } from '@/app/actions'
+import { SYSTEM_ALBUM_ID } from '@/lib/album-constants'
 
 const useAlbumStore = create(
   persist(
@@ -18,7 +19,15 @@ const useAlbumStore = create(
         try {
           const albums = await getAlbums()
           const photos = await getPhotos('all')
-          set({ albums, photos, isLoading: false })
+          set((state) => ({
+            albums,
+            photos,
+            isLoading: false,
+            activeAlbumId:
+              state.activeAlbumId === 'all' || albums.some((album) => album.id === state.activeAlbumId)
+                ? state.activeAlbumId
+                : 'all',
+          }))
         } catch (error) {
           console.error("Hydration failed:", error)
           set({ isLoading: false })
@@ -59,20 +68,27 @@ const useAlbumStore = create(
       },
 
       addPhotos: async (files, albumId) => {
-        const targetAlbumId = albumId === 'all' ? null : albumId // Adjust based on your schema
+        const targetAlbumId = albumId === 'all' ? SYSTEM_ALBUM_ID : albumId
         
         const photoPromises = files.map(async (file) => {
-          return new Promise((resolve) => {
+          return new Promise((resolve, reject) => {
             const reader = new FileReader()
             reader.onload = async (e) => {
-              const photoData = {
-                url: e.target.result,
-                title: file.name,
-                albumId: targetAlbumId || 'uncategorized' // Ensure this matches your logic
+              try {
+                const photoData = {
+                  url: e.target.result,
+                  title: file.name,
+                  size: file.size,
+                  type: file.type,
+                  albumId: targetAlbumId,
+                }
+                const newPhoto = await dbAddPhoto(photoData)
+                resolve(newPhoto)
+              } catch (error) {
+                reject(error)
               }
-              const newPhoto = await dbAddPhoto(photoData)
-              resolve(newPhoto)
             }
+            reader.onerror = () => reject(new Error(`Failed to read ${file.name}`))
             reader.readAsDataURL(file)
           })
         })

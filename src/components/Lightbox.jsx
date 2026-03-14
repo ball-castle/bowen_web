@@ -1,41 +1,62 @@
 "use client";
-import React, { useState, useEffect, useCallback } from 'react'
-import { X, ChevronLeft, ChevronRight, Download, Trash2 } from 'lucide-react'
-import useAlbumStore from '@/store/albumStore'
+import React, { useCallback, useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, Download, Trash2, X } from "lucide-react";
 
-export default function Lightbox({ photos, initialIndex, onClose }) {
-  const [currentIndex, setCurrentIndex] = useState(initialIndex)
-  const { deletePhoto } = useAlbumStore()
-  const photo = photos[currentIndex]
+import useAlbumStore from "@/store/albumStore";
 
-  const prev = useCallback(() => setCurrentIndex((i) => (i - 1 + photos.length) % photos.length), [photos.length])
-  const next = useCallback(() => setCurrentIndex((i) => (i + 1) % photos.length), [photos.length])
+export default function Lightbox({ photos, initialIndex, isLoggedIn, onClose }) {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const { deletePhoto } = useAlbumStore();
+  const photo = photos[currentIndex];
+
+  const prev = useCallback(() => setCurrentIndex((index) => (index - 1 + photos.length) % photos.length), [photos.length]);
+  const next = useCallback(() => setCurrentIndex((index) => (index + 1) % photos.length), [photos.length]);
 
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === 'Escape') onClose()
-      if (e.key === 'ArrowLeft') prev()
-      if (e.key === 'ArrowRight') next()
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose, prev, next]);
+
+  useEffect(() => {
+    setCurrentIndex(initialIndex);
+  }, [initialIndex]);
+
+  useEffect(() => {
+    if (photos.length === 0) {
+      onClose();
+      return;
     }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [onClose, prev, next])
+
+    if (currentIndex > photos.length - 1) {
+      setCurrentIndex(photos.length - 1);
+    }
+  }, [currentIndex, onClose, photos.length]);
+
+  if (!photo) {
+    return null;
+  }
 
   const handleDelete = () => {
-    deletePhoto(photo.id)
+    deletePhoto(photo.id);
     if (photos.length === 1) {
-      onClose()
+      onClose();
     } else {
-      setCurrentIndex((i) => Math.min(i, photos.length - 2))
+      setCurrentIndex((index) => Math.min(index, photos.length - 2));
     }
-  }
+  };
 
   const handleDownload = () => {
-    const a = document.createElement('a')
-    a.href = photo.url
-    a.download = photo.name
-    a.click()
-  }
+    const link = document.createElement("a");
+    link.href = photo.url;
+    link.download = photo.title || "photo";
+    link.click();
+  };
 
   return (
     <div
@@ -48,7 +69,7 @@ export default function Lightbox({ photos, initialIndex, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div>
-          <p className="text-white font-medium text-sm">{photo.name}</p>
+          <p className="text-sm font-medium text-white">{photo.title || "Untitled"}</p>
           <p className="text-white/50 text-xs">{currentIndex + 1} / {photos.length}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -58,12 +79,14 @@ export default function Lightbox({ photos, initialIndex, onClose }) {
           >
             <Download className="w-4 h-4" />
           </button>
-          <button
-            onClick={handleDelete}
-            className="w-9 h-9 rounded-lg bg-white/10 hover:bg-red-500 flex items-center justify-center text-white transition-all"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          {isLoggedIn && (
+            <button
+              onClick={handleDelete}
+              className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white transition-all hover:bg-red-500"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
           <button
             onClick={onClose}
             className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all"
@@ -77,7 +100,7 @@ export default function Lightbox({ photos, initialIndex, onClose }) {
       <div className="relative flex items-center justify-center w-full h-full px-16">
         <img
           src={photo.url}
-          alt={photo.name}
+          alt={photo.title || "Photo"}
           className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl animate-scaleIn"
           onClick={(e) => e.stopPropagation()}
         />
@@ -115,11 +138,11 @@ export default function Lightbox({ photos, initialIndex, onClose }) {
                 i === currentIndex ? 'ring-2 ring-[hsl(var(--primary))] scale-110' : 'opacity-50 hover:opacity-75'
               }`}
             >
-              <img src={p.url} alt={p.name} className="w-full h-full object-cover" />
+              <img src={p.url} alt={p.title || "Photo"} className="w-full h-full object-cover" />
             </button>
           ))}
         </div>
       )}
     </div>
-  )
+  );
 }
