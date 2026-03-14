@@ -36,15 +36,22 @@ function getWorkerName() {
 
 function putSecret(workerName, key, value) {
   return new Promise((resolve, reject) => {
-    const child = spawn(
-      process.platform === "win32" ? "npx.cmd" : "npx",
-      ["wrangler", "secret", "put", key, "--name", workerName],
-      {
-        cwd: process.cwd(),
-        env: process.env,
-        stdio: ["pipe", "inherit", "inherit"],
-      }
-    );
+    const command =
+      process.platform === "win32"
+        ? {
+            file: process.env.ComSpec || "cmd.exe",
+            args: ["/c", "npx", "wrangler", "secret", "put", key, "--name", workerName],
+          }
+        : {
+            file: "npx",
+            args: ["wrangler", "secret", "put", key, "--name", workerName],
+          };
+
+    const child = spawn(command.file, command.args, {
+      cwd: process.cwd(),
+      env: process.env,
+      stdio: ["pipe", "inherit", "inherit"],
+    });
 
     child.stdin.write(value);
     child.stdin.end();

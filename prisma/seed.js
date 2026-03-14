@@ -9,7 +9,7 @@ const { PrismaClient } = require("@prisma/client");
 const SYSTEM_ALBUM_ID = "uncategorized";
 const SYSTEM_ALBUM_TITLE = "未分类";
 
-const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
+const connectionString = process.env.DATABASE_URL || process.env.DIRECT_URL;
 
 if (!connectionString) {
   throw new Error("DATABASE_URL or DIRECT_URL must be set before seeding");
@@ -37,10 +37,11 @@ async function main() {
   }
 
   const initialData = JSON.parse(fs.readFileSync(dataPath, "utf8"));
+  await ensureUncategorizedAlbum();
 
   console.log("Seeding albums...");
   for (const album of initialData.albums) {
-    if (album.id === "all") continue;
+    if (album.id === "all" || album.id === SYSTEM_ALBUM_ID) continue;
     
     await prisma.album.upsert({
       where: { id: album.id },
