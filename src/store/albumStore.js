@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { get, set as setItem, del } from 'idb-keyval'
+import initialData from '../data/initialData.json'
 
 const storage = {
   getItem: async (name) => {
@@ -14,17 +15,19 @@ const storage = {
   },
 }
 
-// We store photos as base64 strings in localStorage
-// Each photo: { id, albumId, name, url (base64), size, type, uploadedAt }
+// We store photos as base64 or paths in localStorage/IndexedDB
+// Each photo: { id, albumId, name, url, size, type, uploadedAt }
 // Each album: { id, name, cover (url|null), createdAt }
 
 const useAlbumStore = create(
   persist(
     (set, get) => ({
-      albums: [{ id: 'all', name: '全部照片', cover: null, createdAt: Date.now() }],
-      photos: [],
+      albums: initialData.albums,
+      photos: initialData.photos,
       activeAlbumId: 'all',
+      layout: 'grid', // 'grid' | 'masonry' | 'large'
 
+      setLayout: (layout) => set({ layout }),
       setActiveAlbum: (id) => set({ activeAlbumId: id }),
 
       addAlbum: (name) => {
@@ -96,6 +99,27 @@ const useAlbumStore = create(
     {
       name: 'album-storage',
       storage,
+      version: 1,
+      migrate: (persistedState, version) => {
+        if (version === 0) {
+          // Migrate old state by combining with initialData
+          const existingPhotos = persistedState.photos || []
+          // Check if we need to seed the data (only if the user hasn't already uploaded these paths)
+          const mergedPhotos = [...initialData.photos, ...existingPhotos]
+          
+          let mergedAlbums = [
+             ...initialData.albums, 
+             ...(persistedState.albums || []).filter(a => a.id !== 'all')
+          ]
+          
+          return {
+            ...persistedState,
+            albums: mergedAlbums,
+            photos: mergedPhotos,
+          }
+        }
+        return persistedState
+      }
     }
   )
 )

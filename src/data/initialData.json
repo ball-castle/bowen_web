@@ -1,0 +1,240 @@
+{
+  "albums": [
+    {
+      "id": "all",
+      "name": "全部照片",
+      "cover": null,
+      "createdAt": 1773485132770
+    },
+    {
+      "id": "album-bowen",
+      "name": "博文的照片",
+      "cover": "/photos/bowen/微信图片_20260314175423_612_4.jpg",
+      "createdAt": 1773485132771
+    },
+    {
+      "id": "album-avatars",
+      "name": "动漫形象库",
+      "cover": "/photos/avatars/anime_avatar_chibi_1773482989775.png",
+      "createdAt": 1773485132772
+    }
+  ],
+  "photos": [
+    {
+      "id": "73bfbec0-c16c-46ff-947a-cb0664d981c7",
+      "name": "微信图片_20260314175423_612_4.jpg",
+      "url": "/photos/bowen/微信图片_20260314175423_612_4.jpg",
+      "size": 41009,
+      "type": "image/jpeg",
+      "uploadedAt": 1773485132701,
+      "albumId": "album-bowen"
+    },
+    {
+      "id": "f1af7838-de3d-4e01-b636-a5f9a34766ec",
+      "name": "微信图片_20260314175424_613_4.jpg",
+      "url": "/photos/bowen/微信图片_20260314175424_613_4.jpg",
+      "size": 211513,
+      "type": "image/jpeg",
+      "uploadedAt": 1773485132702,
+      "albumId": "album-bowen"
+    },
+    {
+      "id": "fdddb2f9-2b6b-4624-bfc4-b966dbf0aafa",
+      "name": "微信图片_20260314175426_614_4.jpg",
+      "url": "/photos/bowen/微信图片_20260314175426_614_4.jpg",
+      "size": 211278,
+      "type": "image/jpeg",
+      "uploadedAt": 1773485132703,
+      "albumId": "album-bowen"
+    },
+    {
+      "id": "9a43be5e-5298-46ae-9eaf-854cf319309b",
+      "name": "微信图片_20260314175426_615_4.jpg",
+      "url": "/photos/bowen/微信图片_20260314175426_615_4.jpg",
+      "size": 250486,
+      "type": "image/jpeg",
+      "uploadedAt": 1773485132704,
+      "albumId": "album-bowen"
+    },
+    {
+      "id": "651cfcaf-1661-4d85-9622-478b598cdbe6",
+      "name": "微信图片_20260314175427_616_4.jpg",
+      "url": "/photos/bowen/微信图片_20260314175427_616_4.jpg",
+      "size": 487802,
+      "type": "image/jpeg",
+      "uploadedAt": 1773485132705,
+      "albumId": "album-bowen"
+    },
+    {
+      "id": "2de5f58b-439b-4dfe-aaef-893216045592",
+      "name": "微信图片_20260314175428_617_4.jpg",
+      "url": "/photos/bowen/微信图片_20260314175428_617_4.jpg",
+      "size": 918548,
+      "type": "image/jpeg",
+      "uploadedAt": 1773485132706,
+      "albumId": "album-bowen"
+    },
+    {
+      "id": "79dc513a-ab36-4807-b85d-109ead9fda7a",
+      "name": "微信图片_20260314175429_618_4.jpg",
+      "url": "/photos/bowen/微信图片_20260314175429_618_4.jpg",
+      "size": 699957,
+      "type": "image/jpeg",
+      "uploadedAt": 1773485132707,
+      "albumId": "album-bowen"
+    },
+    {
+      "id": "368ba013-6eeb-4874-95a1-5468dc397d78",
+      "name": "微信图片_20260314175430_619_4.jpg",
+      "url": "/photos/bowen/微信图片_20260314175430_619_4.jpg",
+      "size": 497047,
+      "type": "image/jpeg",
+      "uploadedAt": 1773485132708,
+      "albumId": "album-bowen"
+    },
+    {
+      "id": "78fcf1e9-924b-4a43-99c7-92575df031c0",
+      "name": "微信图片_20260314175431_620_4.jpg",
+      "url": "/photos/bowen/微信图片_20260314175431_620_4.jpg",
+      "size": 604887,
+      "type": "image/jpeg",
+      "uploadedAt": 1773485132709,
+      "albumId": "album-bowen"
+    },
+    {
+      "id": "f9d0bff9-f09b-4855-ad78-85f33a7d074e",
+      "name": "微信图片_20260314175433_621_4.jpg",
+      "url": "/photos/bowen/微信图片_20260314175433_621_4.jpg",
+      "size": 7266136,
+      "type": "image/jpeg",
+      "uploadedAt": 1773485132710,
+      "albumId": "album-bowen"
+    },
+    {
+      "id": "8cacf3f7-6f62-4dcc-82a7-4c61cc6d5af5",
+      "name": "微信图片_20260314175436_622_4.jpg",
+      "url": "/photos/bowen/微信图片_20260314175436_622_4.jpg",
+      "size": 7598009,
+      "type": "image/jpeg",
+      "uploadedAt": 1773485132711,
+      "albumId": "album-bowen"
+    },
+    {
+      "id": "f33a3d91-24d6-4397-9074-70b7c81a1eca",
+      "name": "微信图片_20260314175444_623_4.jpg",
+      "url": "/photos/bowen/微信图片_20260314175444_623_4.jpg",
+      "size": 7478956,
+      "type": "image/jpeg",
+      "uploadedAt": 1773485132712,
+      "albumId": "album-bowen"
+    },
+    {
+      "id": "b423993c-67c8-4236-bb66-29f93e452828",
+      "name": "微信图片_20260314175450_624_4.jpg",
+      "url": "/photos/bowen/微信图片_20260314175450_624_4.jpg",
+      "size": 7292357,
+      "type": "image/jpeg",
+      "uploadedAt": 1773485132713,
+      "albumId": "album-bowen"
+    },
+    {
+      "id": "39e5cac7-7ced-4512-88e5-781942018c99",
+      "name": "微信图片_20260314175618_627_4.jpg",
+      "url": "/photos/bowen/微信图片_20260314175618_627_4.jpg",
+      "size": 655282,
+      "type": "image/jpeg",
+      "uploadedAt": 1773485132714,
+      "albumId": "album-bowen"
+    },
+    {
+      "id": "e5b4bb3c-7e1b-4d38-a42c-bf2c733a6fb4",
+      "name": "微信图片_20260314175620_628_4.jpg",
+      "url": "/photos/bowen/微信图片_20260314175620_628_4.jpg",
+      "size": 341466,
+      "type": "image/jpeg",
+      "uploadedAt": 1773485132715,
+      "albumId": "album-bowen"
+    },
+    {
+      "id": "742f9416-6a9d-464f-8ab8-c0e1a4831a8d",
+      "name": "anime_avatar_chibi_1773482989775.png",
+      "url": "/photos/avatars/anime_avatar_chibi_1773482989775.png",
+      "size": 512043,
+      "type": "image/png",
+      "uploadedAt": 1773485132752,
+      "albumId": "album-avatars"
+    },
+    {
+      "id": "d9f9e221-373e-40a0-b714-802e1131926e",
+      "name": "anime_avatar_college_lofi_1773483522005.png",
+      "url": "/photos/avatars/anime_avatar_college_lofi_1773483522005.png",
+      "size": 730203,
+      "type": "image/png",
+      "uploadedAt": 1773485132753,
+      "albumId": "album-avatars"
+    },
+    {
+      "id": "eb4100fd-1832-4f0d-9963-6953efe12694",
+      "name": "anime_avatar_college_sporty_1773483544975.png",
+      "url": "/photos/avatars/anime_avatar_college_sporty_1773483544975.png",
+      "size": 775743,
+      "type": "image/png",
+      "uploadedAt": 1773485132754,
+      "albumId": "album-avatars"
+    },
+    {
+      "id": "10489a07-4405-401c-b6c4-66b1717594a3",
+      "name": "anime_avatar_college_sunny_1773483510625.png",
+      "url": "/photos/avatars/anime_avatar_college_sunny_1773483510625.png",
+      "size": 673071,
+      "type": "image/png",
+      "uploadedAt": 1773485132755,
+      "albumId": "album-avatars"
+    },
+    {
+      "id": "fefb07f8-6b7e-4e18-8a5d-0457284c3ef4",
+      "name": "anime_avatar_cool_1773483000906.png",
+      "url": "/photos/avatars/anime_avatar_cool_1773483000906.png",
+      "size": 668559,
+      "type": "image/png",
+      "uploadedAt": 1773485132756,
+      "albumId": "album-avatars"
+    },
+    {
+      "id": "18e9ded1-9f2a-43b2-9722-702cc2097248",
+      "name": "anime_avatar_cool_shoujo_1773483376583.png",
+      "url": "/photos/avatars/anime_avatar_cool_shoujo_1773483376583.png",
+      "size": 707867,
+      "type": "image/png",
+      "uploadedAt": 1773485132757,
+      "albumId": "album-avatars"
+    },
+    {
+      "id": "cf7a5922-a89e-4024-8718-18cab75cf35a",
+      "name": "anime_avatar_cute_chinese_1773483366003.png",
+      "url": "/photos/avatars/anime_avatar_cute_chinese_1773483366003.png",
+      "size": 652078,
+      "type": "image/png",
+      "uploadedAt": 1773485132758,
+      "albumId": "album-avatars"
+    },
+    {
+      "id": "c2b97817-0785-4c99-9b21-fe02e5f93d67",
+      "name": "anime_avatar_handsome_chinese_1773483356559.png",
+      "url": "/photos/avatars/anime_avatar_handsome_chinese_1773483356559.png",
+      "size": 662878,
+      "type": "image/png",
+      "uploadedAt": 1773485132759,
+      "albumId": "album-avatars"
+    },
+    {
+      "id": "01d44f80-a003-41fe-8cdc-9073e50efa80",
+      "name": "anime_avatar_standard_1773482979054.png",
+      "url": "/photos/avatars/anime_avatar_standard_1773482979054.png",
+      "size": 798430,
+      "type": "image/png",
+      "uploadedAt": 1773485132760,
+      "albumId": "album-avatars"
+    }
+  ]
+}

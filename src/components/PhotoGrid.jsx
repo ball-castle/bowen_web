@@ -3,6 +3,7 @@ import { Trash2, ZoomIn } from 'lucide-react'
 import useAlbumStore from '@/store/albumStore'
 import useAuthStore from '@/store/authStore'
 import Lightbox from './Lightbox'
+import { cn } from '@/lib/utils'
 
 function formatSize(bytes) {
   if (bytes < 1024) return bytes + ' B'
@@ -11,7 +12,7 @@ function formatSize(bytes) {
 }
 
 export default function PhotoGrid() {
-  const { activeAlbumId, getAlbumPhotos, deletePhoto } = useAlbumStore()
+  const { activeAlbumId, getAlbumPhotos, deletePhoto, layout } = useAlbumStore()
   const photos = getAlbumPhotos(activeAlbumId)
   const [lightboxIndex, setLightboxIndex] = useState(null)
   const { isLoggedIn } = useAuthStore()
@@ -31,11 +32,17 @@ export default function PhotoGrid() {
   return (
     <>
       <p className="text-[hsl(var(--muted-foreground))] text-sm mb-4">{photos.length} 张照片</p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      <div className={layout === 'grid'
+        ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
+        : "columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-3 space-y-3"
+      }>
         {photos.map((photo, idx) => (
           <div
             key={photo.id}
-            className="photo-card relative group aspect-square rounded-xl overflow-hidden bg-[hsl(var(--secondary))] cursor-pointer"
+            className={cn(
+              "photo-card relative group rounded-xl overflow-hidden bg-[hsl(var(--secondary))] cursor-pointer break-inside-avoid",
+              layout === 'grid' ? "aspect-square" : "mb-3 inline-block w-full"
+            )}
             style={{ animationDelay: `${idx * 30}ms` }}
           >
             <img
