@@ -11,6 +11,7 @@ model Album {
   id          String   @id @default(cuid())
   title       String
   description String?
+  cover       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   photos      Photo[]
@@ -20,7 +21,8 @@ model Photo {
   id        String   @id @default(cuid())
   url       String
   title     String?
-  caption   String?
+  size      Int?
+  type      String?
   createdAt DateTime @default(now())
   albumId   String
   album     Album    @relation(fields: [albumId], references: [id])
