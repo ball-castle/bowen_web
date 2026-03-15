@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Upload } from "lucide-react";
 
 import { getActionErrorMessage } from "@/lib/action-errors";
@@ -10,8 +10,16 @@ export default function UploadZone({ className }) {
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState("")
+  const [selectedAlbumId, setSelectedAlbumId] = useState("")
   const fileInputRef = useRef(null)
-  const { activeAlbumId, addPhotos } = useAlbumStore()
+  const { activeAlbumId, albums, addPhotos } = useAlbumStore()
+  const needsAlbumSelection = activeAlbumId === 'all'
+  const targetAlbumId = needsAlbumSelection ? selectedAlbumId : activeAlbumId
+
+  useEffect(() => {
+    setSelectedAlbumId(activeAlbumId === 'all' ? "" : activeAlbumId)
+    setError("")
+  }, [activeAlbumId])
 
   const compressImage = (file) => {
     return new Promise((resolve) => {
@@ -66,12 +74,17 @@ export default function UploadZone({ className }) {
     if (isUploading) return
     const imageFiles = Array.from(files).filter((f) => f.type.startsWith('image/'))
     if (imageFiles.length === 0) return
+    if (!targetAlbumId) {
+      setError(albums.length === 0 ? "请先创建一个相册再上传照片" : "请先选择上传到哪个相册")
+      return
+    }
+
     setError("")
     setIsUploading(true)
 
     try {
       const compressedFiles = await Promise.all(imageFiles.map(compressImage))
-      await addPhotos(compressedFiles, activeAlbumId)
+      await addPhotos(compressedFiles, targetAlbumId)
     } catch (uploadError) {
       setError(getActionErrorMessage(uploadError, "上传失败"))
     } finally {
@@ -115,9 +128,35 @@ export default function UploadZone({ className }) {
         multiple
         accept="image/*"
         className="hidden"
-        disabled={isUploading}
+        disabled={isUploading || !targetAlbumId}
         onChange={(e) => handleFiles(e.target.files)}
       />
+      {needsAlbumSelection && (
+        <div
+          className="w-full max-w-sm rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.85)] p-4 text-left"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <label className="mb-2 block text-sm font-medium text-[hsl(var(--foreground))]">上传目标相册</label>
+          <select
+            value={selectedAlbumId}
+            onChange={(event) => {
+              setSelectedAlbumId(event.target.value)
+              setError("")
+            }}
+            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+          >
+            <option value="">请选择一个具体相册</option>
+            {albums.map((album) => (
+              <option key={album.id} value={album.id}>
+                {album.title}
+              </option>
+            ))}
+          </select>
+          <p className="mt-2 text-xs text-[hsl(var(--muted-foreground))]">
+            全部相册视图只用于聚合浏览。上传前需要先指定一个目标相册。
+          </p>
+        </div>
+      )}
       <div className={cn(
         'w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300',
         isDragging
@@ -131,7 +170,11 @@ export default function UploadZone({ className }) {
           {isUploading ? "正在上传照片..." : "点击或拖拽上传照片"}
         </p>
         <p className="text-[hsl(var(--muted-foreground))] text-sm mt-1">
-          {isUploading ? "请稍候，图片正在处理并上传" : "支持 JPG、PNG、GIF、WebP 等格式，可批量上传"}
+          {isUploading
+            ? "请稍候，图片正在处理并上传"
+            : needsAlbumSelection
+              ? "先选择目标相册，再上传 JPG、PNG、GIF、WebP 等图片"
+              : "支持 JPG、PNG、GIF、WebP 等格式，可批量上传"}
         </p>
         {error && <p className="mt-3 text-sm font-medium text-red-500">{error}</p>}
       </div>

@@ -42,8 +42,8 @@ export default function Lightbox({ photos, initialIndex, isLoggedIn, onClose }) 
     return null;
   }
 
-  const handleDelete = () => {
-    deletePhoto(photo.id);
+  const handleDelete = async () => {
+    await deletePhoto(photo.id);
     if (photos.length === 1) {
       onClose();
     } else {
@@ -81,7 +81,9 @@ export default function Lightbox({ photos, initialIndex, isLoggedIn, onClose }) 
           </button>
           {isLoggedIn && (
             <button
-              onClick={handleDelete}
+              onClick={() => {
+                void handleDelete().catch((error) => console.error("Delete photo failed:", error));
+              }}
               className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white transition-all hover:bg-red-500"
             >
               <Trash2 className="h-4 w-4" />

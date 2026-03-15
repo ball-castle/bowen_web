@@ -24,6 +24,8 @@ export default function PhotoGrid({ isLoggedIn }) {
   const photos = getAlbumPhotos(activeAlbumId);
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [activeId, setActiveId] = useState(null);
+  const isAlbumSortable = isLoggedIn && activeAlbumId !== "all";
+  const activePhoto = activeId ? photos.find((photo) => photo.id === activeId) : null;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -50,8 +52,12 @@ export default function PhotoGrid({ isLoggedIn }) {
 
   const handleDragEnd = (event) => {
     setActiveId(null);
+    if (!isAlbumSortable) {
+      return;
+    }
+
     const { active, over } = event;
-    if (active.id !== over?.id) {
+    if (over && active.id !== over.id) {
       reorderPhotos(active.id, over.id);
     }
   };
@@ -85,6 +91,7 @@ export default function PhotoGrid({ isLoggedIn }) {
                 idx={idx}
                 layout={layout}
                 isLoggedIn={isLoggedIn}
+                isDraggable={isAlbumSortable}
                 deletePhoto={deletePhoto}
                 setLightboxIndex={setLightboxIndex}
               />
@@ -93,12 +100,13 @@ export default function PhotoGrid({ isLoggedIn }) {
         </div>
 
         <DragOverlay>
-          {activeId ? (
+          {activePhoto ? (
             <SortablePhoto
-              photo={photos.find((photo) => photo.id === activeId)}
-              idx={photos.findIndex((photo) => photo.id === activeId)}
+              photo={activePhoto}
+              idx={photos.findIndex((photo) => photo.id === activePhoto.id)}
               layout={layout}
               isLoggedIn={isLoggedIn}
+              isDraggable={isAlbumSortable}
               deletePhoto={deletePhoto}
               setLightboxIndex={setLightboxIndex}
               isOverlay

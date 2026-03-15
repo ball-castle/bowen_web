@@ -12,7 +12,16 @@ function formatSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
 }
 
-export function SortablePhoto({ photo, idx, layout, isLoggedIn, deletePhoto, setLightboxIndex, isOverlay }) {
+export function SortablePhoto({
+  photo,
+  idx,
+  layout,
+  isLoggedIn,
+  isDraggable,
+  deletePhoto,
+  setLightboxIndex,
+  isOverlay,
+}) {
   const {
     attributes,
     listeners,
@@ -20,7 +29,7 @@ export function SortablePhoto({ photo, idx, layout, isLoggedIn, deletePhoto, set
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: photo.id })
+  } = useSortable({ id: photo.id, disabled: !isDraggable })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -60,7 +69,7 @@ export function SortablePhoto({ photo, idx, layout, isLoggedIn, deletePhoto, set
         
         <div className="flex justify-between items-start">
           {/* Drag Handle */}
-          {isLoggedIn ? (
+          {isLoggedIn && isDraggable ? (
             <div 
               {...attributes} 
               {...listeners}
@@ -74,7 +83,10 @@ export function SortablePhoto({ photo, idx, layout, isLoggedIn, deletePhoto, set
           {/* Delete Button */}
           {isLoggedIn && (
             <button
-              onClick={(e) => { e.stopPropagation(); deletePhoto(photo.id) }}
+              onClick={(e) => {
+                e.stopPropagation()
+                void deletePhoto(photo.id).catch((error) => console.error('Delete photo failed', error))
+              }}
               className="w-8 h-8 rounded-lg bg-black/50 backdrop-blur-sm flex items-center justify-center text-red-400 hover:bg-red-500 hover:text-white transition-all duration-150"
             >
               <Trash2 className="w-4 h-4" />

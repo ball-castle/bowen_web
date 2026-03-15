@@ -137,7 +137,7 @@ export default function Sidebar({ className, isLoggedIn }) {
                 <button
                   onClick={(event) => {
                     event.stopPropagation();
-                    deleteAlbum(album.id);
+                    void deleteAlbum(album.id).catch((error) => console.error("Delete album failed:", error));
                   }}
                   className="flex h-6 w-6 items-center justify-center rounded text-[hsl(var(--muted-foreground))] opacity-0 transition-all hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100"
                 >

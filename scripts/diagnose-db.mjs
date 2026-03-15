@@ -1,9 +1,9 @@
-
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import 'dotenv/config'
+import { getPrisma } from '../src/lib/prisma.js'
 
 async function main() {
+  const prisma = await getPrisma()
+
   try {
     console.log('正在连接数据库...')
     const albumCount = await prisma.album.count()
@@ -19,14 +19,18 @@ async function main() {
         select: {
           id: true,
           title: true,
-          url: true // We want to check the size
+          url: true,
+          cloudinaryPublicId: true,
+          sortOrder: true,
         }
       })
       
       console.log('\n最近 5 张照片大小分析:')
       photos.forEach(p => {
         const sizeKB = Math.round(p.url.length / 1024)
-        console.log(`- [${p.id}] ${p.title || '无标题'}: ${sizeKB} KB`)
+        console.log(
+          `- [${p.id}] ${p.title || '无标题'}: ${sizeKB} KB, cloudinary=${p.cloudinaryPublicId ? 'yes' : 'no'}, sortOrder=${p.sortOrder}`
+        )
       })
     }
   } catch (e) {

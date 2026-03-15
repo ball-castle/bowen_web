@@ -1,13 +1,12 @@
 import "dotenv/config";
 import { getPrisma } from "./src/lib/prisma.js";
-import { Pool } from "@neondatabase/serverless";
 
 async function test() {
   try {
     console.log("Checking DATABASE_URL in process.env:", process.env.DATABASE_URL ? "Exists" : "MISSING");
     
     console.log("Attempting to get Prisma instance...");
-    const prisma = getPrisma();
+    const prisma = await getPrisma();
     console.log("Instance obtained. Searching for avatar_chosen.png...");
     const matchedPhotos = await prisma.photo.findMany({
       where: {

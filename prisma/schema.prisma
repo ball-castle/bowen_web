@@ -8,22 +8,27 @@ datasource db {
 }
 
 model Album {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  cover       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  photos      Photo[]
+  id                     String   @id @default(cuid())
+  title                  String
+  description            String?
+  cover                  String?
+  coverCloudinaryPublicId String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  photos                 Photo[]
 }
 
 model Photo {
-  id        String   @id @default(cuid())
-  url       String
-  title     String?
-  size      Int?
-  type      String?
-  createdAt DateTime @default(now())
-  albumId   String
-  album     Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  id                String   @id @default(cuid())
+  url               String
+  cloudinaryPublicId String?
+  title             String?
+  size              Int?
+  type              String?
+  sortOrder         Int
+  createdAt         DateTime @default(now())
+  albumId           String
+  album             Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+
+  @@index([albumId, sortOrder])
 }

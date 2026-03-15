@@ -1,23 +1,11 @@
-require("dotenv/config");
-
-const fs = require("fs");
-const path = require("path");
-
-const { PrismaNeon } = require("@prisma/adapter-neon");
-const { PrismaClient } = require("@prisma/client");
+import "dotenv/config";
+import fs from "node:fs";
+import path from "node:path";
 
 const SYSTEM_ALBUM_ID = "uncategorized";
 const SYSTEM_ALBUM_TITLE = "未分类";
-
-const connectionString = process.env.DATABASE_URL || process.env.DIRECT_URL;
-
-if (!connectionString) {
-  throw new Error("DATABASE_URL or DIRECT_URL must be set before seeding");
-}
-
-const prisma = new PrismaClient({
-  adapter: new PrismaNeon({ connectionString }),
-});
+const { getPrisma } = await import("../src/lib/prisma.js");
+const prisma = await getPrisma();
 
 async function ensureUncategorizedAlbum() {
   return prisma.album.upsert({
@@ -38,6 +26,7 @@ async function main() {
 
   const initialData = JSON.parse(fs.readFileSync(dataPath, "utf8"));
   await ensureUncategorizedAlbum();
+  const albumSortOrder = new Map();
 
   console.log("Seeding albums...");
   for (const album of initialData.albums) {
@@ -48,11 +37,13 @@ async function main() {
       update: {
         title: album.id === SYSTEM_ALBUM_ID ? SYSTEM_ALBUM_TITLE : album.name,
         cover: album.cover,
+        coverCloudinaryPublicId: null,
       },
       create: {
         id: album.id,
         title: album.id === SYSTEM_ALBUM_ID ? SYSTEM_ALBUM_TITLE : album.name,
         cover: album.cover,
+        coverCloudinaryPublicId: null,
         createdAt: new Date(album.createdAt || Date.now()),
       },
     });
@@ -69,13 +60,17 @@ async function main() {
       create: {
         id: photo.id,
         url: photo.url,
+        cloudinaryPublicId: null,
         title: photo.name,
         size: photo.size,
         type: photo.type,
+        sortOrder: albumSortOrder.get(albumId) ?? 0,
         createdAt: new Date(photo.uploadedAt || Date.now()),
         albumId,
       },
     });
+
+    albumSortOrder.set(albumId, (albumSortOrder.get(albumId) ?? 0) + 1);
   }
 
   console.log("Seeding completed.");

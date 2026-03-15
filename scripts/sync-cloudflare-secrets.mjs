@@ -9,6 +9,9 @@ const REQUIRED_SECRET_KEYS = [
   "ADMIN_USERNAME",
   "ADMIN_PASSWORD",
   "SESSION_SECRET",
+  "CLOUDINARY_CLOUD_NAME",
+  "CLOUDINARY_API_KEY",
+  "CLOUDINARY_API_SECRET",
 ];
 
 const args = new Set(process.argv.slice(2));
