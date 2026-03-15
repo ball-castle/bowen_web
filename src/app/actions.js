@@ -125,6 +125,8 @@ export async function addPhoto(data) {
       await ensureUncategorizedAlbum(prisma);
     }
 
+    console.log("Adding photo to DB:", JSON.stringify(data, null, 2));
+
     const photo = await prisma.photo.create({
       data: {
         url: data.url,
@@ -135,6 +137,7 @@ export async function addPhoto(data) {
       },
     });
 
+    console.log("Photo successfully added to DB and revalidated path.");
     revalidatePath("/");
     return { ok: true, photo };
   } catch (error) {
