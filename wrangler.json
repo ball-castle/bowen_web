@@ -16,5 +16,17 @@
       "binding": "WORKER_SELF_REFERENCE",
       "service": "bowen-web"
     }
+  ],
+  "routes": [
+    {
+      "pattern": "vitoshow.site",
+      "zone_name": "vitoshow.site",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.vitoshow.site",
+      "zone_name": "vitoshow.site",
+      "custom_domain": true
+    }
   ]
 }
