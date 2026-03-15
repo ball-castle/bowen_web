@@ -78,9 +78,10 @@ const useAlbumStore = create(
 
       addPhotos: async (files, albumId) => {
         const targetAlbumId = albumId === 'all' ? SYSTEM_ALBUM_ID : albumId
+        const uploadedPhotos = []
         
-        const photoPromises = files.map(async (file) => {
-          return new Promise((resolve, reject) => {
+        for (const file of files) {
+          const photo = await new Promise((resolve, reject) => {
             const reader = new FileReader()
             reader.onload = async (e) => {
               try {
@@ -105,10 +106,10 @@ const useAlbumStore = create(
             reader.onerror = () => reject(new Error(`Failed to read ${file.name}`))
             reader.readAsDataURL(file)
           })
-        })
+          uploadedPhotos.push(photo)
+        }
 
-        const newPhotos = await Promise.all(photoPromises)
-        set((state) => ({ photos: [...state.photos, ...newPhotos] }))
+        set((state) => ({ photos: [...state.photos, ...uploadedPhotos] }))
       },
 
       deletePhoto: async (id) => {

@@ -63,6 +63,7 @@ export default function UploadZone({ className }) {
   }
 
   const handleFiles = async (files) => {
+    if (isUploading) return
     const imageFiles = Array.from(files).filter((f) => f.type.startsWith('image/'))
     if (imageFiles.length === 0) return
     setError("")
