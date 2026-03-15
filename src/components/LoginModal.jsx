@@ -1,11 +1,13 @@
 "use client";
 import React, { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
 import { KeyRound, Loader2, X } from "lucide-react";
 
 import { loginAdmin } from "@/app/actions";
 
 export default function LoginModal({ isOpen, onOpenChange, onSuccess }) {
+  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -21,6 +23,7 @@ export default function LoginModal({ isOpen, onOpenChange, onSuccess }) {
       if (result.ok) {
         setUsername("");
         setPassword("");
+        router.refresh();
         onSuccess?.();
         onOpenChange(false);
         return;

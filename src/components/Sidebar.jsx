@@ -6,6 +6,7 @@ import { Camera, FolderOpen, Images, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SYSTEM_ALBUM_ID } from "@/lib/album-constants";
+import { getActionErrorMessage } from "@/lib/action-errors";
 import { cn } from "@/lib/utils";
 import useAlbumStore from "@/store/albumStore";
 
@@ -13,6 +14,8 @@ export default function Sidebar({ className, isLoggedIn }) {
   const { albums, activeAlbumId, setActiveAlbum, addAlbum, deleteAlbum, photos } = useAlbumStore();
   const [newAlbumName, setNewAlbumName] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
   const handleCreate = async () => {
     const name = newAlbumName.trim();
@@ -21,10 +24,19 @@ export default function Sidebar({ className, isLoggedIn }) {
       return;
     }
 
-    const id = await addAlbum(name);
-    setActiveAlbum(id);
-    setNewAlbumName("");
-    setDialogOpen(false);
+    setCreateError("");
+    setIsCreating(true);
+
+    try {
+      const id = await addAlbum(name);
+      setActiveAlbum(id);
+      setNewAlbumName("");
+      setDialogOpen(false);
+    } catch (error) {
+      setCreateError(getActionErrorMessage(error, "新建相册失败"));
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const getPhotoCount = (albumId) => {
@@ -139,7 +151,10 @@ export default function Sidebar({ className, isLoggedIn }) {
         {isLoggedIn && (
           <div className="border-t border-[hsl(var(--border))] px-3 py-3">
             <button
-              onClick={() => setDialogOpen(true)}
+              onClick={() => {
+                setCreateError("");
+                setDialogOpen(true);
+              }}
               className="group flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[hsl(var(--muted-foreground))] transition-all hover:bg-[hsl(var(--secondary))] hover:text-[hsl(var(--foreground))]"
             >
               <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[hsl(var(--secondary))] transition-all group-hover:bg-[hsl(var(--primary)/0.15)] group-hover:text-[hsl(var(--primary))]">
@@ -160,17 +175,19 @@ export default function Sidebar({ className, isLoggedIn }) {
             type="text"
             value={newAlbumName}
             onChange={(event) => setNewAlbumName(event.target.value)}
-            onKeyDown={(event) => event.key === "Enter" && handleCreate()}
+            onKeyDown={(event) => event.key === "Enter" && !isCreating && handleCreate()}
             placeholder="输入相册名称..."
             className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--input))] px-3 py-2.5 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
             autoFocus
+            disabled={isCreating}
           />
+          {createError && <p className="text-sm font-medium text-red-500">{createError}</p>}
           <DialogFooter className="flex flex-row justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)}>
+            <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)} disabled={isCreating}>
               取消
             </Button>
-            <Button size="sm" onClick={handleCreate} disabled={!newAlbumName.trim()}>
-              创建
+            <Button size="sm" onClick={handleCreate} disabled={!newAlbumName.trim() || isCreating}>
+              {isCreating ? "创建中..." : "创建"}
             </Button>
           </DialogFooter>
         </DialogContent>

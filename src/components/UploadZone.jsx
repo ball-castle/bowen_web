@@ -2,11 +2,14 @@
 import React, { useRef, useState } from "react";
 import { Upload } from "lucide-react";
 
+import { getActionErrorMessage } from "@/lib/action-errors";
 import { cn } from "@/lib/utils";
 import useAlbumStore from "@/store/albumStore";
 
 export default function UploadZone({ className }) {
   const [isDragging, setIsDragging] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [error, setError] = useState("")
   const fileInputRef = useRef(null)
   const { activeAlbumId, addPhotos } = useAlbumStore()
 
@@ -62,8 +65,20 @@ export default function UploadZone({ className }) {
   const handleFiles = async (files) => {
     const imageFiles = Array.from(files).filter((f) => f.type.startsWith('image/'))
     if (imageFiles.length === 0) return
-    const compressedFiles = await Promise.all(imageFiles.map(compressImage))
-    await addPhotos(compressedFiles, activeAlbumId)
+    setError("")
+    setIsUploading(true)
+
+    try {
+      const compressedFiles = await Promise.all(imageFiles.map(compressImage))
+      await addPhotos(compressedFiles, activeAlbumId)
+    } catch (uploadError) {
+      setError(getActionErrorMessage(uploadError, "上传失败"))
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+    }
   }
 
   const handleDrop = (e) => {
@@ -99,6 +114,7 @@ export default function UploadZone({ className }) {
         multiple
         accept="image/*"
         className="hidden"
+        disabled={isUploading}
         onChange={(e) => handleFiles(e.target.files)}
       />
       <div className={cn(
@@ -111,11 +127,12 @@ export default function UploadZone({ className }) {
       </div>
       <div className="text-center">
         <p className="text-[hsl(var(--foreground))] font-semibold text-base">
-          点击或拖拽上传照片
+          {isUploading ? "正在上传照片..." : "点击或拖拽上传照片"}
         </p>
         <p className="text-[hsl(var(--muted-foreground))] text-sm mt-1">
-          支持 JPG、PNG、GIF、WebP 等格式，可批量上传
+          {isUploading ? "请稍候，图片正在处理并上传" : "支持 JPG、PNG、GIF、WebP 等格式，可批量上传"}
         </p>
+        {error && <p className="mt-3 text-sm font-medium text-red-500">{error}</p>}
       </div>
     </div>
   )

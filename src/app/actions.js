@@ -10,6 +10,7 @@ import {
 } from "@/lib/admin-session";
 import { SYSTEM_ALBUM_ID } from "@/lib/album-constants";
 import { ensureUncategorizedAlbum, isSystemAlbumId } from "@/lib/albums";
+import { getActionErrorMessage } from "@/lib/action-errors";
 import { getPrisma } from "@/lib/prisma";
 
 export async function getAlbums() {
@@ -61,79 +62,101 @@ export async function logoutAdmin() {
 }
 
 export async function createAlbum(title) {
-  await requireAdmin();
+  try {
+    await requireAdmin();
 
-  const prisma = getPrisma();
-  const normalizedTitle = title.trim();
+    const prisma = getPrisma();
+    const normalizedTitle = title.trim();
 
-  if (!normalizedTitle) {
-    throw new Error("Album title is required");
+    if (!normalizedTitle) {
+      return { ok: false, error: "请输入相册名称" };
+    }
+
+    const album = await prisma.album.create({
+      data: {
+        title: normalizedTitle,
+      },
+    });
+
+    revalidatePath("/");
+    return { ok: true, album };
+  } catch (error) {
+    console.error("createAlbum failed", error);
+    return { ok: false, error: getActionErrorMessage(error, "新建相册失败") };
   }
-
-  const album = await prisma.album.create({
-    data: {
-      title: normalizedTitle,
-    },
-  });
-
-  revalidatePath("/");
-  return album;
 }
 
 export async function deleteAlbum(id) {
-  await requireAdmin();
+  try {
+    await requireAdmin();
 
-  if (isSystemAlbumId(id)) {
-    throw new Error("The system album cannot be deleted");
+    if (isSystemAlbumId(id)) {
+      return { ok: false, error: "系统相册不能删除" };
+    }
+
+    const prisma = getPrisma();
+
+    await prisma.$transaction([
+      prisma.photo.deleteMany({
+        where: { albumId: id },
+      }),
+      prisma.album.delete({
+        where: { id },
+      }),
+    ]);
+
+    revalidatePath("/");
+    return { ok: true };
+  } catch (error) {
+    console.error("deleteAlbum failed", error);
+    return { ok: false, error: getActionErrorMessage(error, "删除相册失败") };
   }
-
-  const prisma = getPrisma();
-
-  await prisma.$transaction([
-    prisma.photo.deleteMany({
-      where: { albumId: id },
-    }),
-    prisma.album.delete({
-      where: { id },
-    }),
-  ]);
-
-  revalidatePath("/");
 }
 
 export async function addPhoto(data) {
-  await requireAdmin();
+  try {
+    await requireAdmin();
 
-  const prisma = getPrisma();
-  const normalizedTitle = data.title?.trim() || null;
-  const targetAlbumId = data.albumId && data.albumId !== "all" ? data.albumId : SYSTEM_ALBUM_ID;
+    const prisma = getPrisma();
+    const normalizedTitle = data.title?.trim() || null;
+    const targetAlbumId = data.albumId && data.albumId !== "all" ? data.albumId : SYSTEM_ALBUM_ID;
 
-  if (targetAlbumId === SYSTEM_ALBUM_ID) {
-    await ensureUncategorizedAlbum(prisma);
+    if (targetAlbumId === SYSTEM_ALBUM_ID) {
+      await ensureUncategorizedAlbum(prisma);
+    }
+
+    const photo = await prisma.photo.create({
+      data: {
+        url: data.url,
+        title: normalizedTitle,
+        size: data.size ?? null,
+        type: data.type ?? null,
+        albumId: targetAlbumId,
+      },
+    });
+
+    revalidatePath("/");
+    return { ok: true, photo };
+  } catch (error) {
+    console.error("addPhoto failed", error);
+    return { ok: false, error: getActionErrorMessage(error, "上传照片失败") };
   }
-
-  const photo = await prisma.photo.create({
-    data: {
-      url: data.url,
-      title: normalizedTitle,
-      size: data.size ?? null,
-      type: data.type ?? null,
-      albumId: targetAlbumId,
-    },
-  });
-
-  revalidatePath("/");
-  return photo;
 }
 
 export async function deletePhoto(id) {
-  await requireAdmin();
+  try {
+    await requireAdmin();
 
-  const prisma = getPrisma();
+    const prisma = getPrisma();
 
-  await prisma.photo.delete({
-    where: { id },
-  });
+    await prisma.photo.delete({
+      where: { id },
+    });
 
-  revalidatePath("/");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (error) {
+    console.error("deletePhoto failed", error);
+    return { ok: false, error: getActionErrorMessage(error, "删除照片失败") };
+  }
 }

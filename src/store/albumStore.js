@@ -38,13 +38,22 @@ const useAlbumStore = create(
       setActiveAlbum: (id) => set({ activeAlbumId: id }),
 
       addAlbum: async (title) => {
-        const newAlbum = await dbCreateAlbum(title)
+        const result = await dbCreateAlbum(title)
+        if (!result.ok) {
+          throw new Error(result.error || '新建相册失败')
+        }
+
+        const newAlbum = result.album
         set((state) => ({ albums: [newAlbum, ...state.albums] }))
         return newAlbum.id
       },
 
       deleteAlbum: async (id) => {
-        await dbDeleteAlbum(id)
+        const result = await dbDeleteAlbum(id)
+        if (!result.ok) {
+          throw new Error(result.error || '删除相册失败')
+        }
+
         set((state) => ({
           albums: state.albums.filter((a) => a.id !== id),
           photos: state.photos.filter((p) => p.albumId !== id),
@@ -82,8 +91,13 @@ const useAlbumStore = create(
                   type: file.type,
                   albumId: targetAlbumId,
                 }
-                const newPhoto = await dbAddPhoto(photoData)
-                resolve(newPhoto)
+                const result = await dbAddPhoto(photoData)
+                if (!result.ok) {
+                  reject(new Error(result.error || `上传 ${file.name} 失败`))
+                  return
+                }
+
+                resolve(result.photo)
               } catch (error) {
                 reject(error)
               }
@@ -98,7 +112,11 @@ const useAlbumStore = create(
       },
 
       deletePhoto: async (id) => {
-        await dbDeletePhoto(id)
+        const result = await dbDeletePhoto(id)
+        if (!result.ok) {
+          throw new Error(result.error || '删除照片失败')
+        }
+
         set((state) => ({ photos: state.photos.filter((p) => p.id !== id) }))
       },
 
