@@ -35,8 +35,12 @@ async function findAlbum(sql, id) {
   return rows[0] ?? null;
 }
 
-async function findPhotoDeleteSnapshot(sql, id) {
-  const rows = await sql`
+async function findPhotoDeleteSnapshots(sql, ids) {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return [];
+  }
+
+  return sql`
     SELECT
       photo."id",
       photo."url",
@@ -48,10 +52,98 @@ async function findPhotoDeleteSnapshot(sql, id) {
     FROM "Photo" AS photo
     INNER JOIN "Album" AS album
       ON album."id" = photo."albumId"
-    WHERE photo."id" = ${id}
+    WHERE photo."id" = ANY(${ids})
   `;
+}
 
-  return rows[0] ?? null;
+function doesAlbumCoverMatchPhoto(photo) {
+  return (
+    photo.cover === photo.url ||
+    (photo.coverCloudinaryPublicId &&
+      photo.cloudinaryPublicId &&
+      photo.coverCloudinaryPublicId === photo.cloudinaryPublicId)
+  );
+}
+
+async function deletePhotosByIds(ids) {
+  const normalizedIds = [...new Set((ids ?? []).map((id) => id?.trim()).filter(Boolean))];
+
+  if (normalizedIds.length === 0) {
+    return { ok: false, error: "请选择要删除的照片" };
+  }
+
+  const sql = getSql();
+  const photos = await findPhotoDeleteSnapshots(sql, normalizedIds);
+
+  if (photos.length === 0) {
+    return { ok: false, error: "照片不存在" };
+  }
+
+  if (photos.length !== normalizedIds.length) {
+    return {
+      ok: false,
+      error: normalizedIds.length === 1 ? "照片不存在" : "部分照片已不存在，请刷新后重试",
+    };
+  }
+
+  const affectedAlbumIds = [...new Set(photos.map((photo) => photo.albumId))];
+  const coverAlbumIds = [
+    ...new Set(photos.filter(doesAlbumCoverMatchPhoto).map((photo) => photo.albumId)),
+  ];
+  const publicIds = [...new Set(photos.map((photo) => photo.cloudinaryPublicId).filter(Boolean))];
+
+  await sql.transaction((tx) => [
+    ...buildQueueCloudinaryDeleteQueries(tx, publicIds),
+    tx`
+      DELETE FROM "Photo"
+      WHERE "id" = ANY(${normalizedIds})
+    `,
+    ...affectedAlbumIds.map((albumId) => tx`
+      WITH ranked_photos AS (
+        SELECT
+          "id",
+          ROW_NUMBER() OVER (
+            ORDER BY "sortOrder" ASC, "createdAt" DESC
+          ) - 1 AS next_sort_order
+        FROM "Photo"
+        WHERE "albumId" = ${albumId}
+      )
+      UPDATE "Photo" AS photo
+      SET "sortOrder" = ranked_photos.next_sort_order
+      FROM ranked_photos
+      WHERE photo."id" = ranked_photos."id"
+    `),
+    ...coverAlbumIds.map((albumId) => tx`
+      WITH fallback_photo AS (
+        SELECT "url", "cloudinaryPublicId"
+        FROM "Photo"
+        WHERE "albumId" = ${albumId}
+        ORDER BY "sortOrder" ASC, "createdAt" DESC
+        LIMIT 1
+      )
+      UPDATE "Album"
+      SET
+        "cover" = (SELECT "url" FROM fallback_photo),
+        "coverCloudinaryPublicId" = (
+          SELECT "cloudinaryPublicId"
+          FROM fallback_photo
+        ),
+        "updatedAt" = NOW()
+      WHERE "id" = ${albumId}
+    `),
+  ]);
+
+  const cleanupResult =
+    publicIds.length > 0
+      ? await processCloudinaryDeletionQueue(publicIds)
+      : { failed: [], succeeded: [] };
+
+  revalidatePath("/");
+  return {
+    ok: true,
+    deletedIds: normalizedIds,
+    warning: getCloudinaryCleanupWarning(cleanupResult.failed),
+  };
 }
 
 export async function getAlbums() {
@@ -195,7 +287,10 @@ export async function deleteAlbum(id) {
       `,
     ]);
 
-    const cleanupResult = await processCloudinaryDeletionQueue(publicIds);
+    const cleanupResult =
+      publicIds.length > 0
+        ? await processCloudinaryDeletionQueue(publicIds)
+        : { failed: [], succeeded: [] };
 
     revalidatePath("/");
     return { ok: true, warning: getCloudinaryCleanupWarning(cleanupResult.failed) };
@@ -306,71 +401,20 @@ export async function addPhoto(data) {
 export async function deletePhoto(id) {
   try {
     await requireAdmin();
-
-    const sql = getSql();
-    const photo = await findPhotoDeleteSnapshot(sql, id);
-
-    if (!photo) {
-      return { ok: false, error: "照片不存在" };
-    }
-
-    const coverMatchesPhoto =
-      photo.cover === photo.url ||
-      (photo.coverCloudinaryPublicId &&
-        photo.cloudinaryPublicId &&
-        photo.coverCloudinaryPublicId === photo.cloudinaryPublicId);
-
-    await sql.transaction((tx) => {
-      const queries = [
-        ...buildQueueCloudinaryDeleteQueries(
-          tx,
-          photo.cloudinaryPublicId ? [photo.cloudinaryPublicId] : []
-        ),
-        tx`
-          DELETE FROM "Photo"
-          WHERE "id" = ${id}
-        `,
-        tx`
-          UPDATE "Photo"
-          SET "sortOrder" = "sortOrder" - 1
-          WHERE "albumId" = ${photo.albumId}
-            AND "sortOrder" > ${photo.sortOrder}
-        `,
-      ];
-
-      if (coverMatchesPhoto) {
-        queries.push(tx`
-          WITH fallback_photo AS (
-            SELECT "url", "cloudinaryPublicId"
-            FROM "Photo"
-            WHERE "albumId" = ${photo.albumId}
-            ORDER BY "sortOrder" ASC, "createdAt" DESC
-            LIMIT 1
-          )
-          UPDATE "Album"
-          SET
-            "cover" = (SELECT "url" FROM fallback_photo),
-            "coverCloudinaryPublicId" = (
-              SELECT "cloudinaryPublicId"
-              FROM fallback_photo
-            ),
-            "updatedAt" = NOW()
-          WHERE "id" = ${photo.albumId}
-        `);
-      }
-
-      return queries;
-    });
-
-    const cleanupResult = await processCloudinaryDeletionQueue(
-      photo.cloudinaryPublicId ? [photo.cloudinaryPublicId] : []
-    );
-
-    revalidatePath("/");
-    return { ok: true, warning: getCloudinaryCleanupWarning(cleanupResult.failed) };
+    return deletePhotosByIds([id]);
   } catch (error) {
     console.error("deletePhoto failed", error);
     return { ok: false, error: getActionErrorMessage(error, "删除照片失败") };
+  }
+}
+
+export async function deletePhotos(ids) {
+  try {
+    await requireAdmin();
+    return deletePhotosByIds(ids);
+  } catch (error) {
+    console.error("deletePhotos failed", error);
+    return { ok: false, error: getActionErrorMessage(error, "批量删除照片失败") };
   }
 }
 

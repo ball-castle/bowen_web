@@ -2,7 +2,7 @@
 import React from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Trash2, ZoomIn, GripVertical } from 'lucide-react'
+import { Check, Trash2, ZoomIn, GripVertical } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 function formatSize(bytes) {
@@ -19,6 +19,9 @@ export function SortablePhoto({
   isLoggedIn,
   isDraggable,
   deletePhoto,
+  selectionMode,
+  isSelected,
+  toggleSelected,
   setLightboxIndex,
   isOverlay,
 }) {
@@ -38,6 +41,15 @@ export function SortablePhoto({
     opacity: isDragging ? 0.8 : 1,
   }
 
+  const handlePrimaryAction = () => {
+    if (selectionMode) {
+      toggleSelected?.(photo.id)
+      return
+    }
+
+    setLightboxIndex(idx)
+  }
+
   return (
     <div
       ref={setNodeRef}
@@ -46,7 +58,9 @@ export function SortablePhoto({
         "photo-card relative group rounded-xl overflow-hidden bg-[hsl(var(--secondary))] break-inside-avoid",
         layout === 'grid' ? "aspect-square" : "mb-3 inline-block w-full",
         isOverlay ? "shadow-2xl scale-105" : "",
-        isDragging ? "shadow-xl ring-2 ring-[hsl(var(--primary))]" : ""
+        isDragging ? "shadow-xl ring-2 ring-[hsl(var(--primary))]" : "",
+        selectionMode ? "cursor-pointer" : "",
+        isSelected ? "ring-2 ring-[hsl(var(--primary))] ring-offset-2 ring-offset-[hsl(var(--background))]" : ""
       )}
     >
       <img
@@ -56,20 +70,35 @@ export function SortablePhoto({
           "w-full h-full object-cover transition-transform duration-300",
           !isDragging && !isOverlay && "group-hover:scale-105"
         )}
-        onClick={() => setLightboxIndex(idx)}
+        onClick={handlePrimaryAction}
       />
       
       {/* Overlay */}
       <div className={cn(
         "absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-200 flex flex-col justify-between p-2 cursor-pointer",
         !isDragging && "group-hover:opacity-100",
-        isOverlay && "opacity-100"
+        isOverlay && "opacity-100",
+        selectionMode && "opacity-100 bg-black/35"
       )}
-      onClick={() => setLightboxIndex(idx)}>
+      onClick={handlePrimaryAction}>
         
         <div className="flex justify-between items-start">
-          {/* Drag Handle */}
-          {isLoggedIn && isDraggable ? (
+          {selectionMode ? (
+            <div 
+              className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-lg backdrop-blur-sm transition-all duration-150",
+                isSelected
+                  ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
+                  : "bg-black/50 text-white/80"
+              )}
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleSelected?.(photo.id)
+              }}
+            >
+              <Check className={cn("h-4 w-4", isSelected ? "opacity-100" : "opacity-0")} />
+            </div>
+          ) : isLoggedIn && isDraggable ? (
             <div 
               {...attributes} 
               {...listeners}
@@ -81,7 +110,7 @@ export function SortablePhoto({
           ) : <div></div>}
 
           {/* Delete Button */}
-          {isLoggedIn && (
+          {isLoggedIn && !selectionMode && (
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -97,14 +126,18 @@ export function SortablePhoto({
         <div className="flex items-end justify-between">
           <div className="min-w-0">
             <p className="text-white text-xs font-medium truncate">{photo.title || "Untitled"}</p>
-            <p className="text-white/60 text-[10px]">{formatSize(photo.size)}</p>
+            <p className="text-white/60 text-[10px]">
+              {selectionMode ? (isSelected ? '已选中' : '点按选择') : formatSize(photo.size)}
+            </p>
           </div>
-          <button
-            onClick={(e) => { e.stopPropagation(); setLightboxIndex(idx) }}
-            className="w-8 h-8 rounded-lg bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all duration-150 flex-shrink-0 ml-1"
-          >
-            <ZoomIn className="w-4 h-4" />
-          </button>
+          {!selectionMode && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setLightboxIndex(idx) }}
+              className="w-8 h-8 rounded-lg bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all duration-150 flex-shrink-0 ml-1"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     </div>

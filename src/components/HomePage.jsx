@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useEffect, useState, useTransition } from "react";
-import { Columns, LayoutGrid, Loader2, LogIn, LogOut, Upload, X } from "lucide-react";
+import { Columns, LayoutGrid, Loader2, LogIn, LogOut, Trash2, Upload, X } from "lucide-react";
 
 import { logoutAdmin } from "@/app/actions";
 import LoginModal from "@/components/LoginModal";
 import PhotoGrid from "@/components/PhotoGrid";
 import Sidebar from "@/components/Sidebar";
 import UploadZone from "@/components/UploadZone";
+import { SYSTEM_ALBUM_ID } from "@/lib/album-constants";
+import { getActionErrorMessage } from "@/lib/action-errors";
 import { cn } from "@/lib/utils";
 import useAlbumStore from "@/store/albumStore";
 
@@ -17,9 +19,15 @@ export default function HomePage({ initialIsLoggedIn }) {
   const [previewImage, setPreviewImage] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(initialIsLoggedIn);
   const [isLoggingOut, startLogoutTransition] = useTransition();
+  const [isDeletingAlbum, startDeleteAlbumTransition] = useTransition();
 
-  const { albums, activeAlbumId, setActiveAlbum, layout, setLayout, hydrate, isLoading } = useAlbumStore();
+  const { albums, activeAlbumId, setActiveAlbum, layout, setLayout, hydrate, isLoading, deleteAlbum } = useAlbumStore();
   const activeAlbum = albums.find((album) => album.id === activeAlbumId);
+  const canDeleteAlbum =
+    isLoggedIn &&
+    activeAlbumId !== "all" &&
+    Boolean(activeAlbum) &&
+    activeAlbum.id !== SYSTEM_ALBUM_ID;
 
   useEffect(() => {
     hydrate();
@@ -37,6 +45,27 @@ export default function HomePage({ initialIsLoggedIn }) {
         setShowUpload(false);
       } catch (error) {
         console.error("Logout failed:", error);
+      }
+    });
+  };
+
+  const handleDeleteAlbum = () => {
+    if (!activeAlbum || activeAlbum.id === SYSTEM_ALBUM_ID) {
+      return;
+    }
+
+    const confirmed = window.confirm(`确定要删除相册「${activeAlbum.title}」吗？相册内的照片也会一起删除。`);
+    if (!confirmed) {
+      return;
+    }
+
+    startDeleteAlbumTransition(async () => {
+      try {
+        await deleteAlbum(activeAlbum.id);
+        setShowUpload(false);
+      } catch (error) {
+        console.error("Delete album failed:", error);
+        window.alert(getActionErrorMessage(error, "删除相册失败"));
       }
     });
   };
@@ -136,8 +165,23 @@ export default function HomePage({ initialIsLoggedIn }) {
                   )}
                 >
                   {showUpload ? <X className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
-                  <span className="hidden sm:inline">{showUpload ? "收起" : "上传照片"}</span>
+                  <span className="hidden sm:inline">{showUpload ? "收起" : "批量上传"}</span>
                 </button>
+                {canDeleteAlbum && (
+                  <button
+                    onClick={handleDeleteAlbum}
+                    disabled={isDeletingAlbum}
+                    title="删除当前相册"
+                    className="flex items-center gap-2 rounded-lg bg-red-500/10 px-4 py-2 text-sm font-medium text-red-500 transition-all hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isDeletingAlbum ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                    <span className="hidden sm:inline">{isDeletingAlbum ? "删除中" : "删除相册"}</span>
+                  </button>
+                )}
                 <button
                   onClick={handleLogout}
                   disabled={isLoggingOut}

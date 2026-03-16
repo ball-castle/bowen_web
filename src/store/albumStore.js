@@ -8,6 +8,7 @@ import {
   deleteAlbum as dbDeleteAlbum,
   addPhoto as dbAddPhoto,
   deletePhoto as dbDeletePhoto,
+  deletePhotos as dbDeletePhotos,
   reorderAlbumPhotos as dbReorderAlbumPhotos,
 } from '@/app/actions'
 
@@ -201,6 +202,26 @@ const useAlbumStore = create(
         set((state) => ({
           albums,
           photos: state.photos.filter((p) => p.id !== id),
+        }))
+      },
+
+      deletePhotos: async (ids) => {
+        const normalizedIds = [...new Set((ids ?? []).filter(Boolean))]
+
+        if (normalizedIds.length === 0) {
+          return
+        }
+
+        const result = await dbDeletePhotos(normalizedIds)
+        if (!result.ok) {
+          throw new Error(result.error || '批量删除照片失败')
+        }
+
+        const deletedIdSet = new Set(result.deletedIds ?? normalizedIds)
+        const albums = await getAlbums()
+        set((state) => ({
+          albums,
+          photos: state.photos.filter((photo) => !deletedIdSet.has(photo.id)),
         }))
       },
 
