@@ -72,6 +72,12 @@ Run the live migration after secrets are configured:
 npm run db:migrate:legacy-cloudinary
 ```
 
+Retry any queued Cloudinary deletions that could not be completed during app requests:
+
+```bash
+npm run cloudinary:retry-deletes
+```
+
 ## Cloudflare Workers
 
 Local Workers preview expects a `.dev.vars` file. Start from `.dev.vars.example` and fill in the same runtime secrets used above.

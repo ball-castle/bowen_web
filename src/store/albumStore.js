@@ -131,6 +131,7 @@ const useAlbumStore = create(
 
       addPhotos: async (files, albumId) => {
         const targetAlbumId = albumId?.trim()
+        const uploadedPhotos = []
 
         if (!targetAlbumId || targetAlbumId === 'all') {
           throw new Error('请选择上传到哪个相册')
@@ -167,15 +168,26 @@ const useAlbumStore = create(
               throw new Error(result.error || `保存 ${file.name} 失败`)
             }
 
-            const albums = await getAlbums()
-            set((state) => ({
-              albums,
-              photos: [...state.photos, result.photo],
-            }))
+            uploadedPhotos.push(result.photo)
           } catch (error) {
+            if (uploadedPhotos.length > 0) {
+              const albums = await getAlbums()
+              set((state) => ({
+                albums,
+                photos: [...state.photos, ...uploadedPhotos],
+              }))
+            }
             console.error("Detailed upload process error:", error)
             throw error // 抛出异常由外部 UploadZone 处理
           }
+        }
+
+        if (uploadedPhotos.length > 0) {
+          const albums = await getAlbums()
+          set((state) => ({
+            albums,
+            photos: [...state.photos, ...uploadedPhotos],
+          }))
         }
       },
 

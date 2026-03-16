@@ -113,7 +113,8 @@ async function loadAssetSource(assetUrl, fallbackName, fallbackMimeType) {
 }
 
 async function migratePhoto(prisma, photo) {
-  const { blob, fileName } = await loadAssetSource(photo.url, photo.title || `${photo.id}.jpg`, photo.type || "image/jpeg");
+  const legacyUrl = photo.url;
+  const { blob, fileName } = await loadAssetSource(legacyUrl, photo.title || `${photo.id}.jpg`, photo.type || "image/jpeg");
   const upload = await uploadCloudinaryImage({
     file: blob,
     fileName,
@@ -122,12 +123,25 @@ async function migratePhoto(prisma, photo) {
     overwrite: true,
   });
 
-  await prisma.photo.update({
-    where: { id: photo.id },
-    data: {
-      url: upload.url,
-      cloudinaryPublicId: upload.publicId,
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.photo.update({
+      where: { id: photo.id },
+      data: {
+        url: upload.url,
+        cloudinaryPublicId: upload.publicId,
+      },
+    });
+
+    await tx.album.updateMany({
+      where: {
+        id: photo.albumId,
+        cover: legacyUrl,
+      },
+      data: {
+        cover: upload.url,
+        coverCloudinaryPublicId: upload.publicId,
+      },
+    });
   });
 
   return upload;
@@ -150,23 +164,9 @@ async function backfillPhotoPublicId(prisma, photo) {
   return true;
 }
 
-async function migrateAlbumCover(prisma, album, photoCoverMap) {
+async function migrateAlbumCover(prisma, album) {
   if (!album.cover) {
     return { skipped: true, reason: "empty" };
-  }
-
-  const mappedCover = photoCoverMap.get(`${album.id}:${album.cover}`);
-
-  if (mappedCover) {
-    await prisma.album.update({
-      where: { id: album.id },
-      data: {
-        cover: mappedCover.url,
-        coverCloudinaryPublicId: mappedCover.publicId,
-      },
-    });
-
-    return { skipped: false, source: "photo" };
   }
 
   if (isCloudinaryUrl(album.cover) && album.coverCloudinaryPublicId) {
@@ -252,12 +252,10 @@ async function main() {
       return status === "legacy-local" || status === "legacy-data";
     });
     const photosMissingPublicId = photos.filter((photo) => photoStatus(photo) === "cloudinary-without-public-id");
-    const photoCoverMap = new Map();
 
     for (const photo of legacyPhotos) {
       console.log(`Migrating photo ${photo.id} (${photo.title || "untitled"})`);
-      const upload = await migratePhoto(prisma, photo);
-      photoCoverMap.set(`${photo.albumId}:${photo.url}`, upload);
+      await migratePhoto(prisma, photo);
     }
 
     for (const photo of photosMissingPublicId) {
@@ -277,7 +275,7 @@ async function main() {
       }
 
       console.log(`Migrating album cover ${album.id} (${album.title})`);
-      const result = await migrateAlbumCover(prisma, album, photoCoverMap);
+      const result = await migrateAlbumCover(prisma, album);
 
       if (result.skipped) {
         console.log(`Skipped album ${album.id}: ${result.reason}`);
